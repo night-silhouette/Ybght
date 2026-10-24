@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://c1qugbeb21d8p"]
+
+[ext_resource type="Script" uid="uid://dv2tkfn03psqa" path="res://AutoLoad/ExportSet.gd" id="1_aoc6g"]
+
+[node name="ExportSet" type="Node2D" unique_id=1120344468]
+script = ExtResource("1_aoc6g")

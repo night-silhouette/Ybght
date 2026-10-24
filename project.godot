@@ -16,6 +16,7 @@ config/features=PackedStringArray("4.7", "Forward Plus")
 [autoload]
 
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+ExportSet="*uid://c1qugbeb21d8p"
 
 [display]
 
