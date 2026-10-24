@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://b7v1jkl1a2m1q"]
+
+[ext_resource type="Script" path="res://tank.gd" id="1_tank"]
+[ext_resource type="Texture2D" path="res://war of tanks/tank_circle_thick.png" id="2_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tank"]
+size = Vector2(40, 52)
+
+[node name="Tank" type="CharacterBody2D"]
+z_index = 2
+collision_layer = 1
+collision_mask = 1
+script = ExtResource("1_tank")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, 7)
+scale = Vector2(0.14, 0.14)
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 6)
+shape = SubResource("RectangleShape2D_tank")
+
+[node name="Muzzle" type="Marker2D" parent="."]
+position = Vector2(0, -32)

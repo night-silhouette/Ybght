@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://df2m8k4p7nqw1"]
+
+[ext_resource type="Script" uid="uid://cop3ureym3y08" path="res://map.gd" id="1_map"]
+[ext_resource type="PackedScene" uid="uid://b7v1jkl1a2m1q" path="res://tank.tscn" id="2_tank"]
+
+[node name="Map" type="Node2D" unique_id=1492937315]
+script = ExtResource("1_map")
+map_width = 1800.0
+map_height = 1500.0
+
+[node name="Tank1" parent="." unique_id=1120156396 instance=ExtResource("2_tank")]
+position = Vector2(900, 150)
+rotation = 3.1415927
+
+[node name="Tank2" parent="." unique_id=1120156397 instance=ExtResource("2_tank")]
+position = Vector2(900, 1350)
+player_id = 1
