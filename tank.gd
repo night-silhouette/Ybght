@@ -56,6 +56,7 @@ var _oil_timer: float = 0.0
 var _is_leaking_oil: bool = false
 
 signal health_changed(new_health: int, max_health: int)
+signal shield_activated()
 signal died()
 
 func _ready() -> void:
@@ -104,6 +105,7 @@ func take_damage(amount: int = 1) -> void:
 func activate_last_stand_shield() -> void:
 	is_invulnerable = true
 	speed_multiplier = 1.5 # 50% 加速（线速度乘 1.5）
+	emit_signal("shield_activated")
 	
 	# 更换为护盾形态贴图
 	var sprite = $Sprite2D as Sprite2D

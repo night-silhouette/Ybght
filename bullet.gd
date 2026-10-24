@@ -27,6 +27,16 @@ func _physics_process(delta: float) -> void:
 	if collision:
 		var collider = collision.get_collider()
 		
+		# 判断是否击中了医疗包（被子弹拆掉）
+		if collider is RepairKit or (collider and collider.get_parent() is RepairKit):
+			var kit = collider if collider is RepairKit else collider.get_parent()
+			if kit.has_method("destroy_kit"):
+				kit.destroy_kit()
+			else:
+				kit.queue_free()
+			queue_free()
+			return
+		
 		# 判断是否击中了坦克
 		if collider is Tank:
 			# 如果是发射者自己，且子弹尚未发生过墙体反弹（刚开火从炮管出来时），不误伤

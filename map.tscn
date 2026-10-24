@@ -7,6 +7,9 @@
 script = ExtResource("1_map")
 map_width = 1800.0
 map_height = 1500.0
+wall_thickness = 6.0
+repair_kit_interval = null
+repair_kit_scene = null
 
 [node name="Tank1" parent="." unique_id=1120156396 instance=ExtResource("2_tank")]
 position = Vector2(900, 150)

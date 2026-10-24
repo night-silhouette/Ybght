@@ -20,7 +20,7 @@ class_name TankMap
 		_update_camera()
 
 ## 墙体厚度（像素）
-@export var wall_thickness: float = 6.0:
+@export var wall_thickness: float = 3.6:
 	set(val):
 		wall_thickness = max(1.0, val)
 		queue_redraw()
@@ -51,6 +51,13 @@ class_name TankMap
 	set(val):
 		wall_color = val
 		queue_redraw()
+
+@export_group("Spawn Settings")
+## 医疗包生成间隔（秒）
+@export var repair_kit_interval: float = 10.0
+## 医疗包预制体
+@export var repair_kit_scene: PackedScene = preload("res://repair_kit.tscn")
+var _repair_kit_timer: float = 0.0
 
 @export_group("Physics")
 ## 碰撞层（Collision Layer）
@@ -146,6 +153,70 @@ func _ready() -> void:
 	_setup_health_ui()
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 
+func _process(delta: float) -> void:
+	# 仅在游戏正常进行中计时生成医疗包（结算界面打开时暂停生成）
+	if Engine.is_editor_hint() or _game_over_shown:
+		return
+	
+	_repair_kit_timer += delta
+	if _repair_kit_timer >= repair_kit_interval:
+		_repair_kit_timer -= repair_kit_interval
+		_spawn_repair_kit()
+
+## 计算点到线段的距离平方
+func _point_to_segment_dist_sq(p: Vector2, a: Vector2, b: Vector2) -> float:
+	var ab = b - a
+	var ab_len_sq = ab.length_squared()
+	if ab_len_sq == 0.0:
+		return p.distance_squared_to(a)
+	var t = clamp((p - a).dot(ab) / ab_len_sq, 0.0, 1.0)
+	var proj = a + ab * t
+	return p.distance_squared_to(proj)
+
+## 在地图合法空闲区域随机生成一个不与墙体重合的医疗包
+func _spawn_repair_kit() -> void:
+	if not repair_kit_scene:
+		return
+	
+	var scale_x = map_width / 960.0
+	var scale_y = map_height / 800.0
+	
+	# 医疗包碰撞检测半径安全间距（避免紧贴或穿插墙体，放大后留足安全空间）
+	var min_wall_dist = 60.0
+	var min_wall_dist_sq = min_wall_dist * min_wall_dist
+	
+	# 边缘安全距离
+	var margin_x = map_width * 0.1
+	var margin_y = map_height * 0.1
+	
+	var valid_pos = Vector2.ZERO
+	var found = false
+	
+	# 最多尝试 100 次随机采样
+	for attempt in range(100):
+		var test_x = randf_range(margin_x, map_width - margin_x)
+		var test_y = randf_range(margin_y, map_height - margin_y)
+		var test_pos = Vector2(test_x, test_y)
+		
+		var overlaps = false
+		for wall in BASE_WALLS:
+			var p1 = Vector2(wall[0] * scale_x, wall[1] * scale_y)
+			var p2 = Vector2(wall[2] * scale_x, wall[3] * scale_y)
+			if _point_to_segment_dist_sq(test_pos, p1, p2) < min_wall_dist_sq:
+				overlaps = true
+				break
+		
+		if not overlaps:
+			valid_pos = test_pos
+			found = true
+			break
+	
+	if found:
+		var kit = repair_kit_scene.instantiate() as Node2D
+		if kit:
+			kit.global_position = valid_pos
+			add_child(kit)
+
 func _setup_tank_positions() -> void:
 	var tank1 = get_node_or_null("Tank1") as Node2D
 	var tank2 = get_node_or_null("Tank2") as Node2D
@@ -202,6 +273,11 @@ func _setup_health_ui() -> void:
 		tank1.health_changed.connect(update_p1)
 		update_p1.call(tank1.current_health, tank1.max_health)
 		
+		# 监听 P1 开启护盾瞬间：产生一个医疗包（不影响正常10s计时）
+		tank1.shield_activated.connect(func():
+			_spawn_repair_kit()
+		)
+		
 		# 监听 P1 阵亡：展示 P2 胜利画面
 		tank1.died.connect(func():
 			_show_game_over(hud, "res://war of tanks/game_over_p2_win.webp")
@@ -241,6 +317,11 @@ func _setup_health_ui() -> void:
 		
 		tank2.health_changed.connect(update_p2)
 		update_p2.call(tank2.current_health, tank2.max_health)
+		
+		# 监听 P2 开启护盾瞬间：产生一个医疗包（不影响正常10s计时）
+		tank2.shield_activated.connect(func():
+			_spawn_repair_kit()
+		)
 		
 		# 监听 P2 阵亡：展示 P1 胜利画面
 		tank2.died.connect(func():
@@ -383,9 +464,10 @@ func _restart_game() -> void:
 	_p1_check_icon = null
 	_p2_check_icon = null
 	
-	# 2. 清理场上残留的所有子弹和残留油迹
+	# 2. 清理场上残留的所有子弹、残留油迹和未拾取的医疗包
+	_repair_kit_timer = 0.0
 	for child in get_children():
-		if child is Bullet or child is OilPuddle:
+		if child is Bullet or child is OilPuddle or child is RepairKit:
 			child.queue_free()
 	
 	# 3. 复位双方坦克状态、血量和位置
