@@ -24,8 +24,8 @@ func _on_body_entered(body: Node2D) -> void:
 		body.queue_free()
 		destroy_kit()
 	elif body is Tank:
-		# 坦克不满血时穿过直接拾取回血
-		if body.has_method("take_damage") and body.current_health < body.max_health:
+		# 只有当坦克确实不满血时才触发拾取回血，满血时穿过不消耗医疗包
+		if body.current_health < body.max_health:
 			body.current_health = min(body.max_health, body.current_health + 1)
 			body.emit_signal("health_changed", body.current_health, body.max_health)
 			destroy_kit()
